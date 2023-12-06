@@ -1,27 +1,22 @@
-const { google } = require('googleapis');
+require('dotenv').config();
 
+const { google } = require('googleapis');
 const { OAuth2 } = google.auth;
 
 const OAuth2Client = new OAuth2(
-    '823079584256-46st23ifl3lskog0fm0v27dv251094tl.apps.googleusercontent.com',
-    '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'
+    process.env.CALENDAR_CLIENT_ID,
+    process.env.CALENDAR_CLIENT_SECRET
 );
 
 OAuth2Client.setCredentials({
-    refresh_token:
-        '1//042SsyRDmnyF7CgYIARAAGAQSNwF-L9IrJKg7fMHIhxsA7iZBi-J2sw9YaHU1zC0Gmu1Yi26dY7YV02sZynknI80bTlSy-2RCCPY',
+    refresh_token: process.env.REFRESH_TOKEN,
 });
 
 const calendar = google.calendar({ version: 'v3', auth: OAuth2Client });
 
-const eventStartTime = new Date();
-eventStartTime.setDate(eventStartTime.getDay() + 2);
+const eventStartTime = new Date(Date.UTC(2023, 11, 7, 10, 0, 0));
 
-const eventEndTime = new Date();
-eventEndTime.setDate(eventStartTime.getDay() + 2);
-eventEndTime.setMinutes(eventStartTime.getMinutes() + 40);
-
-console.log(eventStartTime, eventEndTime);
+const eventEndTime = new Date(Date.UTC(2023, 11, 7, 11, 0, 0));
 
 const event = {
     summary: 'Meet Janelle',
@@ -36,35 +31,78 @@ const event = {
         timeZone: 'America/Argentina/Cordoba',
     },
 
-    colorId: 4,
+    colorId: 3,
 };
 
-calendar.freebusy.query(
-    {
-        resourse: {
-            timeMin: eventStartTime,
-            timeMax: eventEndTime,
-            timeZone: 'America/Argentina/Cordoba',
-            items: [{ id: 'primary' }], //calendars
-        },
-    },
+// calendar.events.insert(
+//     {
+//         calendarId: 'primary',
+//         resource: event,
+//     },
+//     function (err, event) {
+//         if (err) {
+//             console.log('There was an error contacting the Calendar service: ' + err );
+//             return;
+//         }
+//         console.log('Event created: %s', event.htmlLink);
+//     }
+// );
 
-    (err, res) => {
-        if (err) return console.error('Free busy query Error ', err);
+// calendar.freebusy.query(
+//     {
+//         resourse: {
+//             timeMin: eventStartTime,
+//             timeMax: eventEndTime,
+//             timeZone: 'America/Argentina/Cordoba',
+//             items: [{ id: 'primary' }], //calendars
+//         },
+//     },
 
-        const eventsArr = res.data.calendars.primary.busy;
+//     (err, res) => {
+//         if (err) return console.error('Free busy query Error ', err);
 
-        if (eventsArr.length === 0)
-            return calendar.events.insert(
-                { calendarId: 'primary', resourse: event },
-                (err) => {
-                    if (err)
-                        return console.error('calendar creation error ', err);
+//         const eventsArr = res.data.calendars.primary.busy;
 
-                    return console.log('calendar event created.');
-                }
-            );
+//         if (eventsArr.length === 0)
+//             return calendar.events.insert(
+//                 { calendarId: 'primary', resourse: event },
+//                 (err) => {
+//                     if (err)
+//                         return console.error('calendar creation error ', err);
 
-        return console.log(`Sorry I'm busy`);
-    }
-);
+//                     return console.log('calendar event created.');
+//                 }
+//             );
+
+//         return console.log(`Sorry I'm busy`);
+//     }
+// );
+
+async function getCalendarEvents(calendar) {
+    // check current events
+    const eventsRes = await calendar.events.list({
+        calendarId: 'primary',
+        timeMin: new Date(),
+        timeMax: '2024-01-01T10:00:00-07:00',
+        maxResults: 99,
+        singleEvents: true,
+        orderBy: 'startTime',
+    });
+
+    const upcomingEvents = eventsRes.data.items;
+
+    // log events
+    console.log(
+        `Retrieved ${upcomingEvents.length} upcoming calendar appointment(s):`
+    );
+    upcomingEvents.forEach((event) => {
+        console.log(
+            `Description: ${event.summary} Comienza: ${event.start.dateTime}`
+        );
+    });
+    console.log('\r\n');
+
+    return upcomingEvents;
+}
+
+getCalendarEvents(calendar);

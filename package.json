@@ -10,6 +10,7 @@
   "license": "MIT",
   "dependencies": {
     "@google-cloud/local-auth": "^2.1.0",
+    "dotenv": "^16.3.1",
     "googleapi": "^1.0.2",
     "googleapis": "^105.0.0"
   }
