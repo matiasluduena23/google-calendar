@@ -79,11 +79,16 @@ const event = {
 // );
 
 async function getCalendarEvents(calendar) {
-    // check current events
+    const todayDate = new Date();
+    const twoMonthFromToday = new Date();
+    twoMonthFromToday.setMonth(todayDate.getMonth() + 2);
+
+    console.log(todayDate, twoMonthFromToday);
+    // check events in two month from today
     const eventsRes = await calendar.events.list({
         calendarId: 'primary',
-        timeMin: new Date(),
-        timeMax: '2024-01-01T10:00:00-07:00',
+        timeMin: todayDate,
+        timeMax: twoMonthFromToday,
         maxResults: 99,
         singleEvents: true,
         orderBy: 'startTime',
